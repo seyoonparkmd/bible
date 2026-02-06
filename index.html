@@ -23,7 +23,7 @@
             display: flex; flex-direction: column; align-items: center;
         }
 
-        .container { width: 100%; max-width: 500px; padding-bottom: 120px; }
+        .container { width: 100%; max-width: 500px; padding-bottom: 150px; }
 
         header {
             text-align: center; margin-bottom: 25px;
@@ -68,7 +68,6 @@
         }
         .check-btn.active { background: var(--success); border-color: var(--success); color: white; }
 
-        /* 큐티 나눔 섹션 */
         .sharing-section {
             background: white; border-radius: 20px; padding: 20px;
             margin-top: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.03);
@@ -81,25 +80,28 @@
             padding: 15px; font-family: inherit; font-size: 0.95rem; resize: none;
             box-sizing: border-box; background: #fcfcfc;
         }
-        textarea:focus { outline: 1px solid var(--primary); background: white; }
 
         .save-btn {
             width: 100%; background: var(--primary); color: white; border: none;
             padding: 12px; border-radius: 12px; margin-top: 10px;
-            font-weight: bold; cursor: pointer; transition: 0.2s;
+            font-weight: bold; cursor: pointer;
         }
-        .save-btn:active { transform: scale(0.98); }
 
+        /* 하단 고정 버튼 그룹 */
+        .footer-nav {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            display: flex; justify-content: center; gap: 10px;
+            padding: 20px; background: linear-gradient(transparent, #f8f9fa 30%);
+            z-index: 100;
+        }
         .footer-btn {
-            position: fixed; bottom: 20px; left: 50%;
-            transform: translateX(-50%);
             background: #333; color: white; border: none;
-            padding: 14px 30px; border-radius: 30px; font-weight: bold;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-            cursor: pointer; z-index: 100;
+            padding: 12px 18px; border-radius: 25px; font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2); cursor: pointer; font-size: 0.85rem;
         }
+        .footer-btn.blue { background: var(--primary); }
 
-        /* 모달 스타일 */
+        /* 모달 공통 */
         .modal {
             display: none; position: fixed; top: 0; left: 0;
             width: 100%; height: 100%; background: rgba(0,0,0,0.6);
@@ -108,28 +110,23 @@
         .modal-content {
             background: white; width: 100%; max-width: 500px;
             height: 85vh; border-radius: 30px 30px 0 0;
-            padding: 25px; overflow-y: auto; position: relative;
+            padding: 25px; overflow-y: auto;
         }
-        .close-modal {
-            position: sticky; top: 0; float: right; font-size: 1.5rem;
-            cursor: pointer; color: #aaa; background: white; border-radius: 50%;
-        }
+        .close-modal { float: right; font-size: 1.5rem; cursor: pointer; color: #aaa; }
 
-        .calendar-grid {
-            display: grid; grid-template-columns: repeat(7, 1fr);
-            gap: 5px; margin-bottom: 20px;
+        /* 모아보기 리스트 스타일 */
+        .qt-list-item {
+            background: #f9f9f9; padding: 15px; border-radius: 15px;
+            margin-bottom: 15px; border-left: 5px solid var(--primary);
         }
-        .day-box {
-            aspect-ratio: 1; font-size: 0.7rem; display: flex;
-            justify-content: center; align-items: center;
-            border-radius: 5px; background: #f0f0f0; color: #999;
-            cursor: pointer;
-        }
+        .qt-list-date { font-weight: bold; color: var(--primary); font-size: 0.9rem; margin-bottom: 5px; }
+        .qt-list-content { font-size: 0.95rem; line-height: 1.5; color: #444; white-space: pre-wrap; }
+
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-bottom: 20px; }
+        .day-box { aspect-ratio: 1; font-size: 0.7rem; display: flex; justify-content: center; align-items: center; border-radius: 5px; background: #f0f0f0; color: #999; cursor: pointer; }
         .day-box.done { background: var(--success) !important; color: white !important; }
         .day-box.partial { background: #a5d6a7 !important; color: white !important; }
         .month-title { font-size: 1rem; font-weight: bold; margin: 15px 0 10px; color: #333; }
-        .progress-bar-container { background: #eee; height: 10px; border-radius: 5px; margin: 20px 0; }
-        .progress-bar { background: var(--success); height: 100%; border-radius: 5px; width: 0%; transition: 0.5s; }
     </style>
 </head>
 <body>
@@ -158,25 +155,34 @@
     </div>
 
     <div class="sharing-section">
-        <h3><i class="fas fa-pen-fancy"></i> 오늘의 큐티 나눔</h3>
-        <textarea id="qtSharing" placeholder="오늘 말씀을 통해 깨달은 점이나 기도를 기록해보세요..."></textarea>
-        <button class="save-btn" onclick="saveQT()">나눔 저장하기</button>
+        <h3><i class="fas fa-pen-fancy"></i> 오늘의 큐티 나눔/적용</h3>
+        <textarea id="qtSharing" placeholder="오늘 말씀을 통해 깨달은 점이나 적용할 점을 기록해보세요..."></textarea>
+        <button class="save-btn" onclick="saveQT()">기록 저장하기</button>
     </div>
 
     <div style="margin-top: 20px;">
-        <input type="date" id="datePicker" onchange="selectDate(this.value)" 
-               style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #ddd;">
+        <input type="date" id="datePicker" onchange="selectDate(this.value)" style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #ddd;">
     </div>
 </div>
 
-<button class="footer-btn" onclick="openHistory()">📋 QT/성경읽기 현황</button>
+<div class="footer-nav">
+    <button class="footer-btn blue" onclick="openQTList()">📝 내 큐티 모아보기</button>
+    <button class="footer-btn" onclick="openHistory()">📋 QT/성경읽기 현황</button>
+</div>
+
+<div id="qtListModal" class="modal" onclick="if(event.target == this) closeQTList()">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeQTList()">&times;</span>
+        <h2 style="margin-top: 0;">나의 큐티 기록함</h2>
+        <div id="qtListContainer">
+            </div>
+    </div>
+</div>
 
 <div id="historyModal" class="modal" onclick="if(event.target == this) closeHistory()">
     <div class="modal-content">
         <span class="close-modal" onclick="closeHistory()">&times;</span>
         <h2 style="margin-top: 0;">2026 통독 달성 현황</h2>
-        <div id="progressText">달성률: 0%</div>
-        <div class="progress-bar-container"><div id="progressBar" class="progress-bar"></div></div>
         <div id="calendarView"></div>
     </div>
 </div>
@@ -239,21 +245,49 @@
         loadQT(y, m, d);
     }
 
-    // 큐티 나눔 저장
     function saveQT() {
-        const m = currentDate.getMonth() + 1;
-        const d = currentDate.getDate();
-        const y = currentDate.getFullYear();
+        const m = currentDate.getMonth() + 1, d = currentDate.getDate(), y = currentDate.getFullYear();
         const content = document.getElementById('qtSharing').value;
+        if(!content.trim()) return alert("내용을 입력해주세요.");
         localStorage.setItem(`qt_note_${y}_${m}_${d}`, content);
-        alert("오늘의 나눔이 저장되었습니다.");
+        alert("기록되었습니다.");
     }
 
-    // 큐티 나눔 불러오기
     function loadQT(y, m, d) {
-        const saved = localStorage.getItem(`qt_note_${y}_${m}_${d}`);
-        document.getElementById('qtSharing').value = saved || "";
+        document.getElementById('qtSharing').value = localStorage.getItem(`qt_note_${y}_${m}_${d}`) || "";
     }
+
+    // 모아보기 화면 열기
+    function openQTList() {
+        const container = document.getElementById('qtListContainer');
+        container.innerHTML = '';
+        let hasData = false;
+
+        // 로컬스토리지 모든 키를 순회하여 QT 기록 찾기
+        const keys = Object.keys(localStorage).filter(k => k.startsWith('qt_note_')).sort().reverse();
+
+        keys.forEach(key => {
+            const content = localStorage.getItem(key);
+            if(content && content.trim()) {
+                hasData = true;
+                const dateParts = key.replace('qt_note_', '').split('_');
+                const dateStr = `${dateParts[0]}년 ${dateParts[1]}월 ${dateParts[2]}일`;
+
+                const item = document.createElement('div');
+                item.className = 'qt-list-item';
+                item.innerHTML = `
+                    <div class="qt-list-date">${dateStr}</div>
+                    <div class="qt-list-content">${content}</div>
+                `;
+                container.appendChild(item);
+            }
+        });
+
+        if(!hasData) container.innerHTML = '<p style="text-align:center; color:#999; margin-top:50px;">아직 저장된 기록이 없습니다.</p>';
+        document.getElementById('qtListModal').style.display = 'flex';
+    }
+
+    function closeQTList() { document.getElementById('qtListModal').style.display = 'none'; }
 
     function toggleCheck(type) {
         const m = currentDate.getMonth() + 1, d = currentDate.getDate(), y = currentDate.getFullYear();
@@ -267,49 +301,29 @@
             const key = `bible_${y}_${m}_${d}_${type}`;
             const btn = document.getElementById(`btn-${type}`);
             const card = document.getElementById(`card-${type}`);
-            if (localStorage.getItem(key)) {
-                btn.classList.add('active'); card.classList.add('completed');
-            } else {
-                btn.classList.remove('active'); card.classList.remove('completed');
-            }
+            localStorage.getItem(key) ? (btn.classList.add('active'), card.classList.add('completed')) : (btn.classList.remove('active'), card.classList.remove('completed'));
         });
-    }
-
-    function toggleWholeDay(y, m, d) {
-        const keyM = `bible_${y}_${m}_${d}_m`, keyE = `bible_${y}_${m}_${d}_e`;
-        if (localStorage.getItem(keyM) && localStorage.getItem(keyE)) {
-            localStorage.removeItem(keyM); localStorage.removeItem(keyE);
-        } else {
-            localStorage.setItem(keyM, 'true'); localStorage.setItem(keyE, 'true');
-        }
-        updateDisplay(); openHistory();
     }
 
     function openHistory() {
         const view = document.getElementById('calendarView');
         view.innerHTML = '';
-        let totalDays = 0, doneDays = 0;
         for (let m = 1; m <= 12; m++) {
             const monthDiv = document.createElement('div');
             monthDiv.innerHTML = `<div class="month-title">${m}월</div>`;
             const grid = document.createElement('div'); grid.className = 'calendar-grid';
             const daysInMonth = new Date(2026, m, 0).getDate();
             for (let d = 1; d <= daysInMonth; d++) {
-                totalDays++;
                 const isM = localStorage.getItem(`bible_2026_${m}_${d}_m`), isE = localStorage.getItem(`bible_2026_${m}_${d}_e`);
                 const dayBox = document.createElement('div');
                 dayBox.className = 'day-box';
-                dayBox.onclick = () => toggleWholeDay(2026, m, d);
-                if (isM && isE) { dayBox.classList.add('done'); doneDays++; }
-                else if (isM || isE) { dayBox.classList.add('partial'); }
+                if (isM && isE) dayBox.classList.add('done');
+                else if (isM || isE) dayBox.classList.add('partial');
                 dayBox.innerText = d;
                 grid.appendChild(dayBox);
             }
             monthDiv.appendChild(grid); view.appendChild(monthDiv);
         }
-        const percent = Math.round((doneDays / totalDays) * 100);
-        document.getElementById('progressText').innerText = `2026년 달성률: ${percent}% (${doneDays}/${totalDays}일 완료)`;
-        document.getElementById('progressBar').style.width = percent + '%';
         document.getElementById('historyModal').style.display = 'flex';
     }
 

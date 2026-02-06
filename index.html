@@ -23,7 +23,7 @@
             display: flex; flex-direction: column; align-items: center;
         }
 
-        .container { width: 100%; max-width: 500px; padding-bottom: 80px; }
+        .container { width: 100%; max-width: 500px; padding-bottom: 120px; }
 
         header {
             text-align: center; margin-bottom: 25px;
@@ -46,7 +46,6 @@
             box-shadow: 0 2px 10px rgba(0,0,0,0.03);
             transition: 0.2s; border: 2px solid transparent;
         }
-
         .card.completed { border-color: var(--success); background: #f0fdf4; }
 
         .icon {
@@ -54,7 +53,6 @@
             display: flex; justify-content: center; align-items: center;
             font-size: 1.3rem; margin-right: 15px;
         }
-
         .m-icon { background: var(--morning-bg); color: var(--morning-text); }
         .e-icon { background: var(--evening-bg); color: var(--evening-text); }
 
@@ -68,15 +66,36 @@
             cursor: pointer; display: flex; justify-content: center;
             align-items: center; transition: 0.3s; color: #ddd;
         }
-
         .check-btn.active { background: var(--success); border-color: var(--success); color: white; }
+
+        /* 큐티 나눔 섹션 */
+        .sharing-section {
+            background: white; border-radius: 20px; padding: 20px;
+            margin-top: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+        }
+        .sharing-section h3 { margin: 0 0 15px; font-size: 1.1rem; color: #333; display: flex; align-items: center; }
+        .sharing-section h3 i { margin-right: 8px; color: var(--primary); }
+        
+        textarea {
+            width: 100%; height: 120px; border-radius: 12px; border: 1px solid #eee;
+            padding: 15px; font-family: inherit; font-size: 0.95rem; resize: none;
+            box-sizing: border-box; background: #fcfcfc;
+        }
+        textarea:focus { outline: 1px solid var(--primary); background: white; }
+
+        .save-btn {
+            width: 100%; background: var(--primary); color: white; border: none;
+            padding: 12px; border-radius: 12px; margin-top: 10px;
+            font-weight: bold; cursor: pointer; transition: 0.2s;
+        }
+        .save-btn:active { transform: scale(0.98); }
 
         .footer-btn {
             position: fixed; bottom: 20px; left: 50%;
             transform: translateX(-50%);
-            background: var(--primary); color: white; border: none;
-            padding: 12px 25px; border-radius: 30px; font-weight: bold;
-            box-shadow: 0 5px 15px rgba(74, 144, 226, 0.4);
+            background: #333; color: white; border: none;
+            padding: 14px 30px; border-radius: 30px; font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
             cursor: pointer; z-index: 100;
         }
 
@@ -86,13 +105,11 @@
             width: 100%; height: 100%; background: rgba(0,0,0,0.6);
             z-index: 1000; justify-content: center; align-items: flex-end;
         }
-
         .modal-content {
             background: white; width: 100%; max-width: 500px;
             height: 85vh; border-radius: 30px 30px 0 0;
             padding: 25px; overflow-y: auto; position: relative;
         }
-
         .close-modal {
             position: sticky; top: 0; float: right; font-size: 1.5rem;
             cursor: pointer; color: #aaa; background: white; border-radius: 50%;
@@ -102,17 +119,17 @@
             display: grid; grid-template-columns: repeat(7, 1fr);
             gap: 5px; margin-bottom: 20px;
         }
-
         .day-box {
             aspect-ratio: 1; font-size: 0.7rem; display: flex;
             justify-content: center; align-items: center;
             border-radius: 5px; background: #f0f0f0; color: #999;
+            cursor: pointer;
         }
-
-        .day-box.done { background: var(--success); color: white; }
+        .day-box.done { background: var(--success) !important; color: white !important; }
+        .day-box.partial { background: #a5d6a7 !important; color: white !important; }
         .month-title { font-size: 1rem; font-weight: bold; margin: 15px 0 10px; color: #333; }
         .progress-bar-container { background: #eee; height: 10px; border-radius: 5px; margin: 20px 0; }
-        .progress-bar { background: var(--success); height: 100%; border-radius: 5px; width: 0%; }
+        .progress-bar { background: var(--success); height: 100%; border-radius: 5px; width: 0%; transition: 0.5s; }
     </style>
 </head>
 <body>
@@ -140,18 +157,24 @@
         <button class="check-btn" id="btn-e" onclick="toggleCheck('e')"><i class="fas fa-check"></i></button>
     </div>
 
+    <div class="sharing-section">
+        <h3><i class="fas fa-pen-fancy"></i> 오늘의 큐티 나눔</h3>
+        <textarea id="qtSharing" placeholder="오늘 말씀을 통해 깨달은 점이나 기도를 기록해보세요..."></textarea>
+        <button class="save-btn" onclick="saveQT()">나눔 저장하기</button>
+    </div>
+
     <div style="margin-top: 20px;">
         <input type="date" id="datePicker" onchange="selectDate(this.value)" 
                style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #ddd;">
     </div>
 </div>
 
-<button class="footer-btn" onclick="openHistory()">📚 QT/성경읽기 기록 보기</button>
+<button class="footer-btn" onclick="openHistory()">📋 QT/성경읽기 현황</button>
 
 <div id="historyModal" class="modal" onclick="if(event.target == this) closeHistory()">
     <div class="modal-content">
         <span class="close-modal" onclick="closeHistory()">&times;</span>
-        <h2 style="margin-top: 0;">통독 달성 현황</h2>
+        <h2 style="margin-top: 0;">2026 통독 달성 현황</h2>
         <div id="progressText">달성률: 0%</div>
         <div class="progress-bar-container"><div id="progressBar" class="progress-bar"></div></div>
         <div id="calendarView"></div>
@@ -159,7 +182,6 @@
 </div>
 
 <script>
-    // [데이터 생략 방지 - 이전 데이터와 동일]
     const bibleData = {
 1: {
             1: ["마 1장", "창 1-3장"], 2: ["마 2장", "창 4. 5. 6"], 3: ["마 3장", "창 7. 8. 9"], 4: ["마 4장", "창 10.11.12"], 5: ["마 5: 1-20", "창 13.14.15"], 6: ["마 5:21-48", "창 16.17."], 7: ["마 6: 1-18", "창 18.19."], 8: ["마 6:19-34", "창 20.21.22"], 9: ["마 7", "창 23.24."], 10: ["마 8: 1-22", "창 25.26."], 11: ["마 8:23-34", "창 27.28."], 12: ["마 9: 1-17", "창 29.30."], 13: ["마 9:18-38", "창 31.32."], 14: ["마 10: 1-23", "창 33.34.35"], 15: ["마 10:24-42", "창 36.37.38"], 16: ["마 11", "창 39.40.41"], 17: ["마 12: 1-21", "창 42.43.44"], 18: ["마 12:22-50", "창 45.46."], 19: ["마 13: 1-23", "창 47.48."], 20: ["마 13:24-58", "창 49.50."], 21: ["마 14", "출 1-3장"], 22: ["마 15: 1-20", "출 4. 5. 6"], 23: ["마 15:21-39", "출 7. 8. 9"], 24: ["마 16", "출 10.11."], 25: ["마 17", "출 12.13."], 26: ["마 18: 1-14", "출 14.15."], 27: ["마 18:15-35", "출 16.17.18"], 28: ["마 19", "출 19.20."], 29: ["마 20", "출 21.22."], 30: ["마 21: 1-22", "출 23.24."], 31: ["마 21:23-46", "출 25.26."]
@@ -198,7 +220,6 @@
             1: ["벧후 2장", "겔 40-41장"], 2: ["벧후 3", "겔 42.43.44"], 3: ["요일 1장", "겔 45.46."], 4: ["요일 2", "겔 47.48."], 5: ["요일 3", "단 1-2장"], 6: ["요일 4", "단 3. 4."], 7: ["요일 5", "단 5. 6. 7"], 8: ["요한이서", "단 8. 9.10"], 9: ["요한삼서", "단 11.12."], 10: ["유다서", "호 1-4장"], 11: ["계 1장", "호 5.6.7.8"], 12: ["계 2", "호 9.10.11"], 13: ["계 3", "호 12.13.14"], 14: ["계 4", "요엘전체"], 15: ["계 5", "암 1-3장"], 16: ["계 6", "암 4. 5. 6"], 17: ["계 7", "암 7. 8. 9"], 18: ["계 8", "오바댜전체"], 19: ["계 9", "요나전체"], 20: ["계 10", "미 1-3장"], 21: ["계 11", "미 4. 5."], 22: ["계 12", "미 6. 7."], 23: ["계 13", "나훔전체"], 24: ["계 14", "하박국전체"], 25: ["계 16", "스바냐전체"], 26: ["계 17", "학개전체"], 27: ["계 18", "슥 1-4장"], 28: ["계 19", "슥 5. 6. 7. 8"], 29: ["계 20", "슥 9.10.11.12"], 30: ["계 21", "슥 13.14."], 31: ["계 22", "말라기전체"]
         }
     };
-
     let currentDate = new Date();
 
     function updateDisplay() {
@@ -211,24 +232,33 @@
         const localISOTime = (new Date(currentDate - offset)).toISOString().split('T')[0];
         document.getElementById('datePicker').value = localISOTime;
 
-        const morning = (bibleData[m] && bibleData[m][d]) ? bibleData[m][d][0] : "일정 없음";
-        const evening = (bibleData[m] && bibleData[m][d]) ? bibleData[m][d][1] : "일정 없음";
-        document.getElementById('text-m').innerText = morning;
-        document.getElementById('text-e').innerText = evening;
+        document.getElementById('text-m').innerText = (bibleData[m] && bibleData[m][d]) ? bibleData[m][d][0] : "일정 없음";
+        document.getElementById('text-e').innerText = (bibleData[m] && bibleData[m][d]) ? bibleData[m][d][1] : "일정 없음";
 
         loadCheckStatus(y, m, d);
+        loadQT(y, m, d);
     }
 
-    function toggleCheck(type) {
+    // 큐티 나눔 저장
+    function saveQT() {
         const m = currentDate.getMonth() + 1;
         const d = currentDate.getDate();
         const y = currentDate.getFullYear();
+        const content = document.getElementById('qtSharing').value;
+        localStorage.setItem(`qt_note_${y}_${m}_${d}`, content);
+        alert("오늘의 나눔이 저장되었습니다.");
+    }
+
+    // 큐티 나눔 불러오기
+    function loadQT(y, m, d) {
+        const saved = localStorage.getItem(`qt_note_${y}_${m}_${d}`);
+        document.getElementById('qtSharing').value = saved || "";
+    }
+
+    function toggleCheck(type) {
+        const m = currentDate.getMonth() + 1, d = currentDate.getDate(), y = currentDate.getFullYear();
         const key = `bible_${y}_${m}_${d}_${type}`;
-        if (!localStorage.getItem(key)) {
-            localStorage.setItem(key, 'true');
-        } else {
-            localStorage.removeItem(key);
-        }
+        localStorage.getItem(key) ? localStorage.removeItem(key) : localStorage.setItem(key, 'true');
         updateDisplay();
     }
 
@@ -238,51 +268,47 @@
             const btn = document.getElementById(`btn-${type}`);
             const card = document.getElementById(`card-${type}`);
             if (localStorage.getItem(key)) {
-                btn.classList.add('active');
-                card.classList.add('completed');
+                btn.classList.add('active'); card.classList.add('completed');
             } else {
-                btn.classList.remove('active');
-                card.classList.remove('completed');
+                btn.classList.remove('active'); card.classList.remove('completed');
             }
         });
     }
 
-    // 기록 모달 기능
+    function toggleWholeDay(y, m, d) {
+        const keyM = `bible_${y}_${m}_${d}_m`, keyE = `bible_${y}_${m}_${d}_e`;
+        if (localStorage.getItem(keyM) && localStorage.getItem(keyE)) {
+            localStorage.removeItem(keyM); localStorage.removeItem(keyE);
+        } else {
+            localStorage.setItem(keyM, 'true'); localStorage.setItem(keyE, 'true');
+        }
+        updateDisplay(); openHistory();
+    }
+
     function openHistory() {
         const view = document.getElementById('calendarView');
         view.innerHTML = '';
-        let totalDays = 0;
-        let doneDays = 0;
-
+        let totalDays = 0, doneDays = 0;
         for (let m = 1; m <= 12; m++) {
             const monthDiv = document.createElement('div');
             monthDiv.innerHTML = `<div class="month-title">${m}월</div>`;
-            const grid = document.createElement('div');
-            grid.className = 'calendar-grid';
-            
+            const grid = document.createElement('div'); grid.className = 'calendar-grid';
             const daysInMonth = new Date(2026, m, 0).getDate();
             for (let d = 1; d <= daysInMonth; d++) {
                 totalDays++;
-                const isM = localStorage.getItem(`bible_2026_${m}_${d}_m`);
-                const isE = localStorage.getItem(`bible_2026_${m}_${d}_e`);
-                
+                const isM = localStorage.getItem(`bible_2026_${m}_${d}_m`), isE = localStorage.getItem(`bible_2026_${m}_${d}_e`);
                 const dayBox = document.createElement('div');
                 dayBox.className = 'day-box';
-                if (isM && isE) { 
-                    dayBox.classList.add('done'); 
-                    doneDays++;
-                } else if (isM || isE) {
-                    dayBox.style.background = "#a5d6a7"; // 절반 성공
-                }
+                dayBox.onclick = () => toggleWholeDay(2026, m, d);
+                if (isM && isE) { dayBox.classList.add('done'); doneDays++; }
+                else if (isM || isE) { dayBox.classList.add('partial'); }
                 dayBox.innerText = d;
                 grid.appendChild(dayBox);
             }
-            monthDiv.appendChild(grid);
-            view.appendChild(monthDiv);
+            monthDiv.appendChild(grid); view.appendChild(monthDiv);
         }
-
         const percent = Math.round((doneDays / totalDays) * 100);
-        document.getElementById('progressText').innerText = `2026년 통독 달성률: ${percent}% (${doneDays}/${totalDays}일 완료)`;
+        document.getElementById('progressText').innerText = `2026년 달성률: ${percent}% (${doneDays}/${totalDays}일 완료)`;
         document.getElementById('progressBar').style.width = percent + '%';
         document.getElementById('historyModal').style.display = 'flex';
     }

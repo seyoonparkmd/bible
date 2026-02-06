@@ -3,188 +3,144 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2026 성경 통독 플래너</title>
+    <title>LDI 큐티/성경읽기</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
-            --primary: #4a90e2;
-            --morning-bg: #fff4e6;
-            --morning-text: #ff9f43;
-            --evening-bg: #eef2f7;
-            --evening-text: #2e5185;
-            --success: #4caf50;
-            --bg: #f8f9fa;
+            --primary: #4a90e2; --morning-bg: #fff4e6; --morning-text: #ff9f43;
+            --evening-bg: #eef2f7; --evening-text: #2e5185; --success: #4caf50;
+            --danger: #e74c3c; --bg: #f8f9fa; --card-bg: #ffffff; --text: #333;
+        }
+
+        [data-theme="dark"] {
+            --bg: #1a1a1a; --card-bg: #2d2d2d; --text: #f0f0f0; --primary: #5da2f5;
         }
 
         body {
             font-family: 'Pretendard', -apple-system, sans-serif;
-            background-color: var(--bg);
-            margin: 0; padding: 20px;
+            background-color: var(--bg); color: var(--text);
+            margin: 0; padding: 20px; transition: 0.3s;
             display: flex; flex-direction: column; align-items: center;
         }
 
         .container { width: 100%; max-width: 500px; padding-bottom: 150px; }
 
         header {
-            text-align: center; margin-bottom: 25px;
-            background: white; padding: 20px; border-radius: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            text-align: center; margin-bottom: 20px;
+            background: var(--card-bg); padding: 20px; border-radius: 24px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); position: relative;
         }
 
-        .year-tag { color: var(--primary); font-weight: bold; font-size: 0.9rem; }
-        .current-date { font-size: 1.8rem; font-weight: 800; margin: 5px 0; }
+        .theme-toggle { position: absolute; top: 15px; right: 15px; cursor: pointer; color: var(--primary); }
 
-        .nav-buttons { display: flex; justify-content: space-between; margin-top: 15px; }
-        .nav-btn { 
-            background: #eee; border: none; padding: 8px 15px; 
-            border-radius: 10px; cursor: pointer; font-size: 0.9rem;
-        }
+        .total-progress-info { font-size: 0.8rem; margin-top: 10px; display: flex; justify-content: space-between; }
+        .total-bar-container { background: #eee; height: 6px; border-radius: 3px; margin-top: 5px; overflow: hidden; }
+        .total-bar-fill { background: var(--primary); height: 100%; width: 0%; transition: 1s ease-out; }
+
+        .title-tag { color: var(--primary); font-weight: bold; font-size: 1.1rem; letter-spacing: 1px; }
+        .current-date { font-size: 1.6rem; font-weight: 800; margin: 8px 0; }
+
+        .nav-buttons { display: flex; justify-content: space-between; margin-top: 15px; align-items: center; }
+        .nav-btn { background: #eee; border: none; padding: 10px 18px; border-radius: 12px; cursor: pointer; transition: 0.2s; }
+        .nav-btn:active { transform: scale(0.95); }
+        .btn-today { background: var(--primary); color: white; font-weight: bold; }
 
         .card {
-            background: white; border-radius: 20px; padding: 20px;
-            margin-bottom: 15px; display: flex; align-items: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
-            transition: 0.2s; border: 2px solid transparent;
+            background: var(--card-bg); border-radius: 20px; padding: 20px;
+            margin-bottom: 12px; display: flex; align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 2px solid transparent; cursor: pointer;
         }
         .card.completed { border-color: var(--success); background: #f0fdf4; }
+        [data-theme="dark"] .card.completed { background: #1b2e1f; }
 
-        .icon {
-            width: 50px; height: 50px; border-radius: 15px;
-            display: flex; justify-content: center; align-items: center;
-            font-size: 1.3rem; margin-right: 15px;
-        }
+        .icon { width: 45px; height: 45px; border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; margin-right: 15px; }
         .m-icon { background: var(--morning-bg); color: var(--morning-text); }
         .e-icon { background: var(--evening-bg); color: var(--evening-text); }
 
         .info { flex: 1; }
-        .info span { display: block; font-size: 0.8rem; color: #999; }
-        .info strong { font-size: 1.1rem; color: #333; }
+        .info span { display: block; font-size: 0.75rem; color: #888; }
+        .info strong { font-size: 1rem; }
 
-        .check-btn {
-            width: 35px; height: 35px; border-radius: 50%;
-            border: 2px solid #ddd; background: white;
-            cursor: pointer; display: flex; justify-content: center;
-            align-items: center; transition: 0.3s; color: #ddd;
-        }
+        .check-btn { width: 38px; height: 38px; border-radius: 50%; border: 2px solid #ddd; background: transparent; cursor: pointer; color: #ddd; font-size: 1.1rem; }
         .check-btn.active { background: var(--success); border-color: var(--success); color: white; }
 
-        .sharing-section {
-            background: white; border-radius: 20px; padding: 20px;
-            margin-top: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.03);
-        }
-        .sharing-section h3 { margin: 0 0 15px; font-size: 1.1rem; color: #333; display: flex; align-items: center; }
-        .sharing-section h3 i { margin-right: 8px; color: var(--primary); }
-        
-        textarea {
-            width: 100%; height: 120px; border-radius: 12px; border: 1px solid #eee;
-            padding: 15px; font-family: inherit; font-size: 0.95rem; resize: none;
-            box-sizing: border-box; background: #fcfcfc;
+        .sharing-section { background: var(--card-bg); border-radius: 20px; padding: 20px; margin-top: 10px; }
+        textarea { 
+            width: 100%; min-height: 120px; border-radius: 12px; border: 1px solid #eee; 
+            padding: 15px; font-family: inherit; background: var(--bg); color: var(--text); 
+            resize: vertical; box-sizing: border-box; line-height: 1.6;
         }
 
-        .save-btn {
-            width: 100%; background: var(--primary); color: white; border: none;
-            padding: 12px; border-radius: 12px; margin-top: 10px;
-            font-weight: bold; cursor: pointer;
-        }
-
-        /* 하단 고정 버튼 그룹 */
-        .footer-nav {
-            position: fixed; bottom: 0; left: 0; width: 100%;
-            display: flex; justify-content: center; gap: 10px;
-            padding: 20px; background: linear-gradient(transparent, #f8f9fa 30%);
-            z-index: 100;
-        }
-        .footer-btn {
-            background: #333; color: white; border: none;
-            padding: 12px 18px; border-radius: 25px; font-weight: bold;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2); cursor: pointer; font-size: 0.85rem;
-        }
+        .footer-nav { position: fixed; bottom: 0; left: 0; width: 100%; display: flex; justify-content: center; gap: 8px; padding: 20px; background: linear-gradient(transparent, var(--bg) 40%); z-index: 100; }
+        .footer-btn { background: #333; color: white; border: none; padding: 14px 20px; border-radius: 25px; font-weight: bold; cursor: pointer; font-size: 0.85rem; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
         .footer-btn.blue { background: var(--primary); }
 
-        /* 모달 공통 */
-        .modal {
-            display: none; position: fixed; top: 0; left: 0;
-            width: 100%; height: 100%; background: rgba(0,0,0,0.6);
-            z-index: 1000; justify-content: center; align-items: flex-end;
-        }
-        .modal-content {
-            background: white; width: 100%; max-width: 500px;
-            height: 85vh; border-radius: 30px 30px 0 0;
-            padding: 25px; overflow-y: auto;
-        }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: flex-end; }
+        .modal-content { background: var(--card-bg); width: 100%; max-width: 500px; height: 85vh; border-radius: 30px 30px 0 0; padding: 25px; overflow-y: auto; box-sizing: border-box; }
         .close-modal { float: right; font-size: 1.5rem; cursor: pointer; color: #aaa; }
 
-        /* 모아보기 리스트 스타일 */
-        .qt-list-item {
-            background: #f9f9f9; padding: 15px; border-radius: 15px;
-            margin-bottom: 15px; border-left: 5px solid var(--primary);
-        }
-        .qt-list-date { font-weight: bold; color: var(--primary); font-size: 0.9rem; margin-bottom: 5px; }
-        .qt-list-content { font-size: 0.95rem; line-height: 1.5; color: #444; white-space: pre-wrap; }
-
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-bottom: 20px; }
-        .day-box { aspect-ratio: 1; font-size: 0.7rem; display: flex; justify-content: center; align-items: center; border-radius: 5px; background: #f0f0f0; color: #999; cursor: pointer; }
-        .day-box.done { background: var(--success) !important; color: white !important; }
-        .day-box.partial { background: #a5d6a7 !important; color: white !important; }
-        .month-title { font-size: 1rem; font-weight: bold; margin: 15px 0 10px; color: #333; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+        .day-box { aspect-ratio: 1; font-size: 0.7rem; display: flex; justify-content: center; align-items: center; border-radius: 6px; background: #eee; cursor: pointer; }
+        .day-box.done { background: var(--success) !important; color: white; }
+        .day-box.partial { background: #a5d6a7 !important; color: white; }
+        [data-theme="dark"] .day-box { background: #444; color: #aaa; }
     </style>
 </head>
-<body>
+<body data-theme="light">
 
 <div class="container">
     <header>
-        <div class="year-tag">2026 BIBLE JOURNEY</div>
-        <div id="displayDate" class="current-date">2026년 2월 7일</div>
+        <div class="theme-toggle" onclick="toggleTheme()"><i class="fas fa-moon"></i></div>
+        <div class="title-tag">LDI 큐티/성경읽기</div>
+        <div id="displayDate" class="current-date">로딩 중...</div>
+        
+        <div class="total-progress-info">
+            <span>2026 완독 여정</span>
+            <span id="progressPercent">0%</span>
+        </div>
+        <div class="total-bar-container"><div id="totalBarFill" class="total-bar-fill"></div></div>
+
         <div class="nav-buttons">
             <button class="nav-btn" onclick="changeDate(-1)"><i class="fas fa-chevron-left"></i></button>
-            <button class="nav-btn" onclick="goToday()">오늘</button>
+            <button class="nav-btn btn-today" onclick="goToday()">오늘</button>
             <button class="nav-btn" onclick="changeDate(1)"><i class="fas fa-chevron-right"></i></button>
         </div>
     </header>
 
-    <div class="card" id="card-m">
+    <div class="card" id="card-m" onclick="openBibleLink('m')">
         <div class="icon m-icon"><i class="fas fa-sun"></i></div>
-        <div class="info"><span>아침 (신약/QT)</span><strong id="text-m">-</strong></div>
-        <button class="check-btn" id="btn-m" onclick="toggleCheck('m')"><i class="fas fa-check"></i></button>
+        <div class="info"><span>아침 (신약/QT) • 클릭 시 읽기</span><strong id="text-m">-</strong></div>
+        <button class="check-btn" id="btn-m" onclick="event.stopPropagation(); toggleCheck('m')"><i class="fas fa-check"></i></button>
     </div>
 
-    <div class="card" id="card-e">
+    <div class="card" id="card-e" onclick="openBibleLink('e')">
         <div class="icon e-icon"><i class="fas fa-moon"></i></div>
-        <div class="info"><span>저녁 (구약통독)</span><strong id="text-e">-</strong></div>
-        <button class="check-btn" id="btn-e" onclick="toggleCheck('e')"><i class="fas fa-check"></i></button>
+        <div class="info"><span>저녁 (구약통독) • 클릭 시 읽기</span><strong id="text-e">-</strong></div>
+        <button class="check-btn" id="btn-e" onclick="event.stopPropagation(); toggleCheck('e')"><i class="fas fa-check"></i></button>
     </div>
 
     <div class="sharing-section">
-        <h3><i class="fas fa-pen-fancy"></i> 오늘의 큐티 나눔/적용</h3>
-        <textarea id="qtSharing" placeholder="오늘 말씀을 통해 깨달은 점이나 적용할 점을 기록해보세요..."></textarea>
-        <button class="save-btn" onclick="saveQT()">기록 저장하기</button>
+        <h3><i class="fas fa-feather-alt"></i> 오늘의 큐티 나눔/적용</h3>
+        <textarea id="qtSharing" oninput="autoSaveQT()" placeholder="말씀을 통해 깨달은 점과 삶에 적용할 내용을 자유롭게 기록하세요..."></textarea>
     </div>
 
-    <div style="margin-top: 20px;">
-        <input type="date" id="datePicker" onchange="selectDate(this.value)" style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #ddd;">
+    <div style="margin-top: 15px; display: flex; gap: 10px;">
+        <input type="date" id="datePicker" onchange="selectDate(this.value)" style="flex:1; padding:12px; border-radius:12px; border:1px solid #ddd; background: var(--card-bg); color: var(--text);">
+        <button class="nav-btn" onclick="exportData()" title="기록 백업하기"><i class="fas fa-file-download"></i></button>
     </div>
 </div>
 
 <div class="footer-nav">
-    <button class="footer-btn blue" onclick="openQTList()">📝 내 큐티 모아보기</button>
-    <button class="footer-btn" onclick="openHistory()">📋 QT/성경읽기 현황</button>
+    <button class="footer-btn blue" onclick="openQTList()"><i class="fas fa-book-open"></i> 내 큐티 모음</button>
+    <button class="footer-btn" onclick="openHistory()"><i class="fas fa-calendar-check"></i> 통독 현황</button>
 </div>
 
 <div id="qtListModal" class="modal" onclick="if(event.target == this) closeQTList()">
-    <div class="modal-content">
-        <span class="close-modal" onclick="closeQTList()">&times;</span>
-        <h2 style="margin-top: 0;">나의 큐티 기록함</h2>
-        <div id="qtListContainer">
-            </div>
-    </div>
+    <div class="modal-content"><span class="close-modal" onclick="closeQTList()">&times;</span><h2>나의 큐티 기록함</h2><div id="qtListContainer"></div></div>
 </div>
 
 <div id="historyModal" class="modal" onclick="if(event.target == this) closeHistory()">
-    <div class="modal-content">
-        <span class="close-modal" onclick="closeHistory()">&times;</span>
-        <h2 style="margin-top: 0;">2026 통독 달성 현황</h2>
-        <div id="calendarView"></div>
-    </div>
+    <div class="modal-content"><span class="close-modal" onclick="closeHistory()">&times;</span><h2>2026 통독 현황 (달력)</h2><div id="calendarView"></div></div>
 </div>
 
 <script>
@@ -229,10 +185,11 @@
     let currentDate = new Date();
 
     function updateDisplay() {
-        const m = currentDate.getMonth() + 1;
-        const d = currentDate.getDate();
-        const y = currentDate.getFullYear();
-        document.getElementById('displayDate').innerText = `${y}년 ${m}월 ${d}일`;
+        const y = currentDate.getFullYear(), m = currentDate.getMonth() + 1, d = currentDate.getDate();
+        const week = ['일', '월', '화', '수', '목', '금', '토'];
+        const dayOfWeek = week[currentDate.getDay()];
+        
+        document.getElementById('displayDate').innerText = `${y}년 ${m}월 ${d}일 (${dayOfWeek})`;
         
         const offset = currentDate.getTimezoneOffset() * 60000;
         const localISOTime = (new Date(currentDate - offset)).toISOString().split('T')[0];
@@ -242,52 +199,50 @@
         document.getElementById('text-e').innerText = (bibleData[m] && bibleData[m][d]) ? bibleData[m][d][1] : "일정 없음";
 
         loadCheckStatus(y, m, d);
-        loadQT(y, m, d);
-    }
-
-    function saveQT() {
-        const m = currentDate.getMonth() + 1, d = currentDate.getDate(), y = currentDate.getFullYear();
-        const content = document.getElementById('qtSharing').value;
-        if(!content.trim()) return alert("내용을 입력해주세요.");
-        localStorage.setItem(`qt_note_${y}_${m}_${d}`, content);
-        alert("기록되었습니다.");
-    }
-
-    function loadQT(y, m, d) {
         document.getElementById('qtSharing').value = localStorage.getItem(`qt_note_${y}_${m}_${d}`) || "";
+        updateProgressBar();
     }
 
-    // 모아보기 화면 열기
-    function openQTList() {
-        const container = document.getElementById('qtListContainer');
-        container.innerHTML = '';
-        let hasData = false;
-
-        // 로컬스토리지 모든 키를 순회하여 QT 기록 찾기
-        const keys = Object.keys(localStorage).filter(k => k.startsWith('qt_note_')).sort().reverse();
-
-        keys.forEach(key => {
-            const content = localStorage.getItem(key);
-            if(content && content.trim()) {
-                hasData = true;
-                const dateParts = key.replace('qt_note_', '').split('_');
-                const dateStr = `${dateParts[0]}년 ${dateParts[1]}월 ${dateParts[2]}일`;
-
-                const item = document.createElement('div');
-                item.className = 'qt-list-item';
-                item.innerHTML = `
-                    <div class="qt-list-date">${dateStr}</div>
-                    <div class="qt-list-content">${content}</div>
-                `;
-                container.appendChild(item);
+    function updateProgressBar() {
+        let total = 365, done = 0;
+        for(let key in localStorage) {
+            if(key.startsWith('bible_2026_') && key.endsWith('_m')) {
+                const eKey = key.replace('_m', '_e');
+                if(localStorage.getItem(eKey)) done++;
             }
-        });
-
-        if(!hasData) container.innerHTML = '<p style="text-align:center; color:#999; margin-top:50px;">아직 저장된 기록이 없습니다.</p>';
-        document.getElementById('qtListModal').style.display = 'flex';
+        }
+        const percent = Math.round((done/total)*100);
+        document.getElementById('progressPercent').innerText = percent + '%';
+        document.getElementById('totalBarFill').style.width = percent + '%';
     }
 
-    function closeQTList() { document.getElementById('qtListModal').style.display = 'none'; }
+    function openBibleLink(type) {
+        const text = document.getElementById(`text-${type}`).innerText;
+        if(text === "일정 없음") return;
+        const query = encodeURIComponent(text.split(' ')[0] + text.split(' ')[1]);
+        window.open(`https://bible.godpeople.com/?query=${query}`, '_blank');
+    }
+
+    function toggleTheme() {
+        const body = document.body;
+        const isDark = body.getAttribute('data-theme') === 'dark';
+        body.setAttribute('data-theme', isDark ? 'light' : 'dark');
+        document.querySelector('.theme-toggle i').className = isDark ? 'fas fa-moon' : 'fas fa-sun';
+    }
+
+    function autoSaveQT() {
+        const m = currentDate.getMonth() + 1, d = currentDate.getDate(), y = currentDate.getFullYear();
+        localStorage.setItem(`qt_note_${y}_${m}_${d}`, document.getElementById('qtSharing').value);
+    }
+
+    function exportData() {
+        const data = JSON.stringify(localStorage);
+        const blob = new Blob([data], {type: 'text/plain'});
+        const anchor = document.createElement('a');
+        anchor.href = URL.createObjectURL(blob);
+        anchor.download = `LDI_Bible_Backup_${new Date().toLocaleDateString()}.txt`;
+        anchor.click();
+    }
 
     function toggleCheck(type) {
         const m = currentDate.getMonth() + 1, d = currentDate.getDate(), y = currentDate.getFullYear();
@@ -306,20 +261,17 @@
     }
 
     function openHistory() {
-        const view = document.getElementById('calendarView');
-        view.innerHTML = '';
+        const view = document.getElementById('calendarView'); view.innerHTML = '';
         for (let m = 1; m <= 12; m++) {
             const monthDiv = document.createElement('div');
-            monthDiv.innerHTML = `<div class="month-title">${m}월</div>`;
+            monthDiv.innerHTML = `<div style="font-weight:bold; margin:15px 0 8px;">${m}월</div>`;
             const grid = document.createElement('div'); grid.className = 'calendar-grid';
-            const daysInMonth = new Date(2026, m, 0).getDate();
-            for (let d = 1; d <= daysInMonth; d++) {
+            for (let d = 1; d <= new Date(2026, m, 0).getDate(); d++) {
                 const isM = localStorage.getItem(`bible_2026_${m}_${d}_m`), isE = localStorage.getItem(`bible_2026_${m}_${d}_e`);
-                const dayBox = document.createElement('div');
-                dayBox.className = 'day-box';
-                if (isM && isE) dayBox.classList.add('done');
-                else if (isM || isE) dayBox.classList.add('partial');
-                dayBox.innerText = d;
+                const dayBox = document.createElement('div'); dayBox.className = 'day-box';
+                if (isM && isE) dayBox.classList.add('done'); else if (isM || isE) dayBox.classList.add('partial');
+                dayBox.innerText = d; 
+                dayBox.onclick = () => { currentDate = new Date(2026, m-1, d); updateDisplay(); closeHistory(); };
                 grid.appendChild(dayBox);
             }
             monthDiv.appendChild(grid); view.appendChild(monthDiv);
@@ -327,7 +279,23 @@
         document.getElementById('historyModal').style.display = 'flex';
     }
 
+    function openQTList() {
+        const container = document.getElementById('qtListContainer'); container.innerHTML = '';
+        const keys = Object.keys(localStorage).filter(k => k.startsWith('qt_note_')).sort().reverse();
+        keys.forEach(key => {
+            const content = localStorage.getItem(key);
+            if(!content.trim()) return;
+            const dp = key.split('_');
+            const item = document.createElement('div'); item.className = 'qt-list-item';
+            item.innerHTML = `<div style="font-weight:bold; color:var(--primary); margin-bottom:5px;">${dp[2]}.${dp[3]}.${dp[4]}</div><div style="font-size:0.9rem; line-height:1.5;">${content}</div>`;
+            container.appendChild(item);
+        });
+        if(container.innerHTML === "") container.innerHTML = "<p style='text-align:center; color:#999;'>기록된 큐티가 없습니다.</p>";
+        document.getElementById('qtListModal').style.display = 'flex';
+    }
+
     function closeHistory() { document.getElementById('historyModal').style.display = 'none'; }
+    function closeQTList() { document.getElementById('qtListModal').style.display = 'none'; }
     function changeDate(n) { currentDate.setDate(currentDate.getDate() + n); updateDisplay(); }
     function selectDate(v) { if(v) { currentDate = new Date(v); updateDisplay(); } }
     function goToday() { currentDate = new Date(); updateDisplay(); }

@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LDI 큐티/성경읽기</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <style>
         :root {
             --primary: #4a90e2; --morning-bg: #fff4e6; --morning-text: #ff9f43;
@@ -32,7 +34,7 @@
         .total-bar-container { background: #eee; height: 6px; border-radius: 3px; margin-top: 5px; overflow: hidden; }
         .total-bar-fill { background: var(--primary); height: 100%; width: 0%; transition: 1s ease-out; }
         .nav-buttons { display: flex; justify-content: space-between; margin-top: 15px; align-items: center; }
-        .nav-btn { background: #eee; border: none; padding: 10px 18px; border-radius: 12px; cursor: pointer; }
+        .nav-btn { background: #eee; border: none; padding: 10px 18px; border-radius: 12px; cursor: pointer; color: #333; }
         .btn-today { background: var(--primary); color: white; font-weight: bold; }
         .card {
             background: var(--card-bg); border-radius: 20px; padding: 20px;
@@ -49,7 +51,14 @@
         .check-btn { width: 38px; height: 38px; border-radius: 50%; border: 2px solid #ddd; background: transparent; cursor: pointer; color: #ddd; font-size: 1.1rem; }
         .check-btn.active { background: var(--success); border-color: var(--success); color: white; }
         .sharing-section { background: var(--card-bg); border-radius: 20px; padding: 20px; margin-top: 10px; }
+        .input-name { width:100%; padding:12px; margin-bottom:10px; border-radius:12px; border:1px solid #ddd; background: var(--bg); color: var(--text); box-sizing: border-box; }
         textarea { width: 100%; min-height: 120px; border-radius: 12px; border: 1px solid #eee; padding: 15px; font-family: inherit; background: var(--bg); color: var(--text); resize: vertical; box-sizing: border-box; line-height: 1.6; }
+        .share-btn { width: 100%; background: var(--success); color: white; border: none; padding: 12px; border-radius: 12px; margin-top: 10px; font-weight: bold; cursor: pointer; }
+        .public-board { background: var(--card-bg); border-radius: 20px; padding: 20px; margin-top: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .post-item { border-bottom: 1px solid #eee; padding: 12px 0; font-size: 0.9rem; }
+        .post-name { font-weight: bold; color: var(--primary); margin-right: 8px; }
+        .post-content { color: var(--text); margin-top: 6px; white-space: pre-wrap; line-height: 1.5; }
+        .post-time { font-size: 0.75rem; color: #bbb; }
         .footer-nav { position: fixed; bottom: 0; left: 0; width: 100%; display: flex; justify-content: center; gap: 8px; padding: 20px; background: linear-gradient(transparent, var(--bg) 40%); z-index: 100; }
         .footer-btn { background: #333; color: white; border: none; padding: 14px 20px; border-radius: 25px; font-weight: bold; cursor: pointer; font-size: 0.85rem; }
         .footer-btn.blue { background: var(--primary); }
@@ -57,8 +66,9 @@
         .modal-content { background: var(--card-bg); width: 100%; max-width: 500px; height: 85vh; border-radius: 30px 30px 0 0; padding: 25px; overflow-y: auto; box-sizing: border-box; }
         .close-modal { float: right; font-size: 1.5rem; cursor: pointer; color: #aaa; }
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
-        .day-box { aspect-ratio: 1; font-size: 0.7rem; display: flex; justify-content: center; align-items: center; border-radius: 6px; background: #eee; cursor: pointer; }
-        .day-box.done { background: var(--success) !important; color: white; }
+        .day-box { aspect-ratio: 1; font-size: 0.7rem; display: flex; justify-content: center; align-items: center; border-radius: 6px; background: #eee; cursor: pointer; color: #333; }
+        .day-box.done { background: var(--success) !important; color: white !important; }
+        .day-box.partial { background: #a5d6a7 !important; color: white !important; }
     </style>
 </head>
 <body data-theme="light">
@@ -90,12 +100,19 @@
 
     <div class="sharing-section">
         <h3><i class="fas fa-feather-alt"></i> 오늘의 큐티 나눔/적용</h3>
+        <input type="text" id="userName" class="input-name" placeholder="이름(닉네임) 입력">
         <textarea id="qtSharing" oninput="autoSaveQT()" placeholder="말씀을 통해 깨달은 점과 적용할 내용을 기록하세요..."></textarea>
+        <button class="share-btn" onclick="postToFirebase()">실시간 공유하기</button>
+    </div>
+
+    <div class="public-board">
+        <h3 style="margin-top:0;"><i class="fas fa-users"></i> 우리들의 실시간 나눔</h3>
+        <div id="publicPosts" style="max-height: 400px; overflow-y: auto;">게시물을 불러오는 중...</div>
     </div>
 
     <div style="margin-top: 15px; display: flex; gap: 10px;">
         <input type="date" id="datePicker" onchange="selectDate(this.value)" style="flex:1; padding:12px; border-radius:12px; border:1px solid #ddd; background: var(--card-bg); color: var(--text);">
-        <button class="nav-btn" onclick="exportData()"><i class="fas fa-file-download"></i></button>
+        <button class="nav-btn" onclick="exportData()" title="백업"><i class="fas fa-file-download"></i></button>
     </div>
 </div>
 
@@ -113,9 +130,26 @@
 </div>
 
 <script>
-    // 1~12월 모든 데이터 포함 (사용자 제공 데이터 기반)
-const bibleData = {
-        1: { 1: ["마 1", "창 1,2,3"], 2: ["마 2", "창 4, 5. 6"], 3: ["마 3장", "창 7. 8. 9"], 4: ["마 4장", "창 10.11.12"], 5: ["마 5: 1-20", "창 13.14.15"], 6: ["마 5:21-48", "창 16.17."], 7: ["마 6: 1-18", "창 18.19."], 8: ["마 6:19-34", "창 20.21.22"], 9: ["마 7", "창 23.24."], 10: ["마 8: 1-22", "창 25.26."], 11: ["마 8:23-34", "창 27.28."], 12: ["마 9: 1-17", "창 29.30."], 13: ["마 9:18-38", "창 31.32."], 14: ["마 10: 1-23", "창 33.34.35"], 15: ["마 10:24-42", "창 36.37.38"], 16: ["마 11", "창 39.40.41"], 17: ["마 12: 1-21", "창 42.43.44"], 18: ["마 12:22-50", "창 45.46."], 19: ["마 13: 1-23", "창 47.48."], 20: ["마 13:24-58", "창 49.50."], 21: ["마 14", "출 1. 2. 3장"], 22: ["마 15: 1-20", "출 4. 5. 6"], 23: ["마 15:21-39", "출 7. 8. 9"], 24: ["마 16", "출 10.11."], 25: ["마 17", "출 12.13."], 26: ["마 18: 1-14", "출 14.15."], 27: ["마 18:15-35", "출 16.17.18"], 28: ["마 19", "출 19.20."], 29: ["마 20", "출 21.22."], 30: ["마 21: 1-22", "출 23.24."], 31: ["마 21:23-46", "출 25.26."] },
+    // [중요] 세윤님의 실제 Firebase 설정 적용
+    const firebaseConfig = {
+        apiKey: "AIzaSyBV8o7Gd6jZLliZLmX5_hCtfAoZn91B_6w",
+        authDomain: "ldi-qt-share.firebaseapp.com",
+        databaseURL: "https://ldi-qt-share-default-rtdb.firebaseio.com",
+        projectId: "ldi-qt-share",
+        storageBucket: "ldi-qt-share.firebasestorage.app",
+        messagingSenderId: "567739775471",
+        appId: "1:567739775471:web:383fb38e809d0a7f9e1e1a",
+        measurementId: "G-LY69VQDZ5K"
+    };
+
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    const database = firebase.database();
+
+    // 성경 데이터 (전체 365일 분량 유지 권장)
+    const bibleData = {
+        1: { 1: ["마 1", "창 1.2.3"], 2: ["마 2", "창 4. 5. 6"], 3: ["마 3장", "창 7. 8. 9"], 4: ["마 4장", "창 10.11.12"], 5: ["마 5: 1-20", "창 13.14.15"], 6: ["마 5:21-48", "창 16.17."], 7: ["마 6: 1-18", "창 18.19."], 8: ["마 6:19-34", "창 20.21.22"], 9: ["마 7", "창 23.24."], 10: ["마 8: 1-22", "창 25.26."], 11: ["마 8:23-34", "창 27.28."], 12: ["마 9: 1-17", "창 29.30."], 13: ["마 9:18-38", "창 31.32."], 14: ["마 10: 1-23", "창 33.34.35"], 15: ["마 10:24-42", "창 36.37.38"], 16: ["마 11", "창 39.40.41"], 17: ["마 12: 1-21", "창 42.43.44"], 18: ["마 12:22-50", "창 45.46."], 19: ["마 13: 1-23", "창 47.48."], 20: ["마 13:24-58", "창 49.50."], 21: ["마 14", "출 1. 2. 3장"], 22: ["마 15: 1-20", "출 4. 5. 6"], 23: ["마 15:21-39", "출 7. 8. 9"], 24: ["마 16", "출 10.11."], 25: ["마 17", "출 12.13."], 26: ["마 18: 1-14", "출 14.15."], 27: ["마 18:15-35", "출 16.17.18"], 28: ["마 19", "출 19.20."], 29: ["마 20", "출 21.22."], 30: ["마 21: 1-22", "출 23.24."], 31: ["마 21:23-46", "출 25.26."] },
         2: { 1: ["마 22: 1-22", "출 27. 28장"], 2: ["마 22:23-46", "출 29.30."], 3: ["마 23", "출 31.32.33"], 4: ["마 24: 1-28", "출 34.35."], 5: ["마 24:29-51", "출 36.37.38"], 6: ["마 25: 1-30", "출 39.40."], 7: ["마 25:31-46", "레 1. 2. 3장"], 8: ["마 26: 1-13", "레 4. 5."], 9: ["마 26:14-35", "레 6. 7."], 10: ["마 26:36-56", "레 8. 9.10"], 11: ["마 26:57-75", "레 11.12."], 12: ["마 27: 1-10", "레 13."], 13: ["마 27:11-31", "레 14."], 14: ["마 27:32-56", "레 15.16."], 15: ["마 27:57-66", "레 17.18."], 16: ["마 28", "레 19.20."], 17: ["행 1장", "레 21.22"], 18: ["행 2: 1-36", "레 23.24."], 19: ["행 2:37-47", "레 25."], 20: ["행 3", "레 26.27."], 21: ["행 4: 1-22", "민 1. 2장"], 22: ["행 4:23-37", "민 3. 4."], 23: ["행 5: 1-16", "민 5. 6."], 24: ["행 5:17-42", "민 7. 8."], 25: ["행 6", "민 9.10.11"], 26: ["행 7: 1-53", "민 12.13.14"], 27: ["행 7:54-60", "민 15.16."], 28: ["행 8: 1-25", "민 17.18.19"], 29: ["딤후 2장", "민 20.21.22"] },
         3: { 1: ["행 8:26-40", "민 23. 24. 25장"], 2: ["행 9: 1-31", "민 26.27."], 3: ["행 9:32-43", "민 28.29.30"], 4: ["행 10: 1-23", "민 31.32.33"], 5: ["행 10:24-48", "민 34.35.36"], 6: ["행 11", "신 1. 2장"], 7: ["행 12", "신 3. 4."], 8: ["행 13: 1-12", "신 5. 6. 7"], 9: ["행 13:13-43", "신 8. 9.10"], 10: ["행 13:44-52", "신 11.12.13"], 11: ["행 14", "신 14.15.16"], 12: ["행 15: 1-21", "신 17.18.19"], 13: ["행 15:22-41", "신 20.21.22"], 14: ["행 16: 1-10", "신 23.24.25"], 15: ["행 16:11-34", "신 26.27."], 16: ["행 16:35-40", "신 28.29."], 17: ["행 17: 1-15", "신 30.31."], 18: ["행 17:16-34", "신 32.33.34"], 19: ["행 18", "수 1. 2. 3장"], 20: ["행 19: 1-20", "수 4. 5. 6"], 21: ["행 19:21-41", "수 7. 8. 9"], 22: ["행 20: 1-16", "수 10.11.12"], 23: ["행 20:17-38", "수 13.14.15"], 24: ["행 21: 1-16", "수 16.17.18"], 25: ["행 21:17-40", "수 19.20.21"], 26: ["행 22", "수 22.23.24"], 27: ["행 23", "삿 1. 2. 3장"], 28: ["행 24", "삿 4. 5. 6"], 29: ["행 25", "삿 7. 8."], 30: ["행 26", "삿 9.10."], 31: ["행 27: 1-26", "삿 11.12."] },
         4: { 1: ["행 27:27-44", "삿 13. 14. 15장"], 2: ["행 28", "삿 16.17.18"], 3: ["막 1:1-20", "삿 19.20.21"], 4: ["막 1:21-45", "룻기전체"], 5: ["막 2장", "삼상 1. 2. 3장"], 6: ["막 3: 1-19", "삼상 4. 5. 6"], 7: ["막 3:20-35", "삼상 7. 8. 9"], 8: ["막 4: 1-20", "삼상 10.11.12"], 9: ["막 4:21-41", "삼상 13.14."], 10: ["막 5: 1-20", "삼상 15.16."], 11: ["막 5:21-43", "삼상 17.18."], 12: ["막 6: 1-29", "삼상 19.20.21"], 13: ["막 6:30-56", "삼상 22.23.24"], 14: ["막 7", "삼상 25.26."], 15: ["막 8: 1-21", "삼상 27.28.29"], 16: ["막 8:22-38", "삼상 30.31."], 17: ["막 9: 1-29", "삼하 1. 2장"], 18: ["막 9:30-50", "삼하 3. 4. 5"], 19: ["막 10: 1-12", "삼하 6. 7. 8"], 20: ["막 10:13-34", "삼하 9.10.11"], 21: ["막 10:35-52", "삼하 12.13."], 22: ["막 11", "삼하 14.15."], 23: ["막 12: 1-17", "삼하 16.17.18"], 24: ["막 12:18-34", "삼하 19.20."], 25: ["막 12:35-44", "삼하 21.22."], 26: ["막 13: 1-23", "삼하 23.24."], 27: ["막 13:24-37", "왕상 1. 2장"], 28: ["막 14: 1-26", "왕상 3. 4. 5"], 29: ["막 14:27-52", "왕상 6. 7."], 30: ["막 14:53-72", "왕상 8. 9."] },
@@ -129,16 +163,7 @@ const bibleData = {
         12: { 1: ["벧후 2장", "겔 40. 41장"], 2: ["벧후 3", "겔 42.43.44"], 3: ["요일 1장", "겔 45.46."], 4: ["요일 2", "겔 47.48."], 5: ["요일 3", "단 1. 2장"], 6: ["요일 4", "단 3. 4."], 7: ["요일 5", "단 5. 6. 7"], 8: ["요한이서", "단 8. 9.10"], 9: ["요한삼서", "단 11.12."], 10: ["유다서", "호 1. 2. 3. 4장"], 11: ["계 1장", "호 5.6.7.8"], 12: ["계 2", "호 9.10.11"], 13: ["계 3", "호 12.13.14"], 14: ["계 4", "요엘전체"], 15: ["계 5", "암 1. 2. 3장"], 16: ["계 6", "암 4. 5. 6"], 17: ["계 7", "암 7. 8. 9"], 18: ["계 8", "오바댜전체"], 19: ["계 9", "요나전체"], 20: ["계 10", "미 1. 2. 3장"], 21: ["계 11", "미 4. 5."], 22: ["계 12", "미 6. 7."], 23: ["계 13", "나훔전체"], 24: ["계 14", "하박국전체"], 25: ["계 16", "스바냐전체"], 26: ["계 17", "학개전체"], 27: ["계 18", "슥 1. 2. 3. 4장"], 28: ["계 19", "슥 5. 6. 7. 8"], 29: ["계 20", "슥 9.10.11.12"], 30: ["계 21", "슥 13.14."], 31: ["계 22", "말라기전체"] }
     };
 
-    // 대한성서공회 영문 약어 매핑
-    const bibleAbbr = {
-        "창": "gen", "출": "exo", "레": "lev", "민": "num", "신": "deu", "수": "jos", "삿": "jdg", "룻": "rut",
-        "삼상": "1sa", "삼하": "2sa", "왕상": "1ki", "왕하": "2ki", "대상": "1ch", "대하": "2ch", "스": "ezr", "느": "neh", "에": "est",
-        "욥": "job", "시": "psa", "잠": "pro", "전": "ecc", "아": "sng", "사": "isa", "렘": "jer", "애": "lam", "겔": "ezk", "단": "dan",
-        "호": "hos", "욜": "joe", "암": "amo", "옵": "oba", "욘": "jon", "미": "mic", "나": "nam", "합": "hab", "습": "zep", "학": "hag", "슥": "zec", "말": "mal",
-        "마": "mat", "막": "mrk", "눅": "luk", "요": "jhn", "행": "act", "롬": "rom", "고전": "1co", "고후": "2co", "갈": "gal", "엡": "eph", "빌": "php", "골": "col",
-        "살전": "1th", "살후": "2th", "딤전": "1ti", "딤후": "2ti", "딛": "tit", "몬": "phm", "히": "heb", "약": "jas", "벧전": "1pe", "벧후": "2pe",
-        "요일": "1jn", "요이": "2jn", "요삼": "3jn", "유": "jud", "계": "rev"
-    };
+    const bibleAbbr = { "창": "gen", "출": "exo", "레": "lev", "민": "num", "신": "deu", "수": "jos", "삿": "jdg", "룻": "rut", "삼상": "1sa", "삼하": "2sa", "왕상": "1ki", "왕하": "2ki", "대상": "1ch", "대하": "2ch", "스": "ezr", "느": "neh", "에": "est", "욥": "job", "시": "psa", "잠": "pro", "전": "ecc", "아": "sng", "사": "isa", "렘": "jer", "애": "lam", "겔": "ezk", "단": "dan", "호": "hos", "욜": "joe", "암": "amo", "옵": "oba", "욘": "jon", "미": "mic", "나": "nam", "합": "hab", "습": "zep", "학": "hag", "슥": "zec", "말": "mal", "마": "mat", "막": "mrk", "눅": "luk", "요": "jhn", "행": "act", "롬": "rom", "고전": "1co", "고후": "2co", "갈": "gal", "엡": "eph", "빌": "php", "골": "col", "살전": "1th", "살후": "2th", "딤전": "1ti", "딤후": "2ti", "딛": "tit", "몬": "phm", "히": "heb", "약": "jas", "벧전": "1pe", "벧후": "2pe", "요일": "1jn", "요이": "2jn", "요삼": "3jn", "유": "jud", "계": "rev" };
 
     let currentDate = new Date();
 
@@ -155,33 +180,17 @@ const bibleData = {
 
         loadCheckStatus(y, m, d);
         document.getElementById('qtSharing').value = localStorage.getItem(`qt_note_${y}_${m}_${d}`) || "";
+        document.getElementById('userName').value = localStorage.getItem('ldi_user_name') || "";
         updateProgressBar();
     }
 
-    // [중요] 성서공회 링크 생성 로직
     function openBSKoreaLink(type) {
         const text = document.getElementById(`text-${type}`).innerText;
         if(text === "일정 없음") return;
-
-        // "마 22: 1-22" -> ["마", "22"] 추출
         const parts = text.split(/[: ]/);
-        const korName = parts[0];
+        const engAbbr = bibleAbbr[parts[0]] || "gen";
         const chapter = parts[1].replace(/[^0-9]/g, '');
-        const engAbbr = bibleAbbr[korName] || "gen";
-
-        const url = `https://www.bskorea.or.kr/bible/korbibReadpage.php?version=GAE&book=${engAbbr}&chap=${chapter}`;
-        window.open(url, '_blank');
-    }
-
-    // 테마/저장/UI 관련 함수들
-    function updateProgressBar() {
-        let total = 365, done = 0;
-        for(let key in localStorage) {
-            if(key.startsWith('bible_2026_') && key.endsWith('_m')) {
-                if(localStorage.getItem(key.replace('_m', '_e'))) done++;
-            }
-        }
-        document.getElementById('totalBarFill').style.width = Math.round((done/total)*100) + '%';
+        window.open(`https://www.bskorea.or.kr/bible/korbibReadpage.php?version=GAE&book=${engAbbr}&chap=${chapter}`, '_blank');
     }
 
     function toggleTheme() {
@@ -211,10 +220,20 @@ const bibleData = {
         });
     }
 
+    function updateProgressBar() {
+        let total = 365, done = 0;
+        for(let key in localStorage) {
+            if(key.startsWith('bible_2026_') && key.endsWith('_m')) {
+                if(localStorage.getItem(key.replace('_m', '_e'))) done++;
+            }
+        }
+        document.getElementById('totalBarFill').style.width = Math.round((done/total)*100) + '%';
+    }
+
     function exportData() {
         const blob = new Blob([JSON.stringify(localStorage)], {type: 'text/plain'});
         const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-        a.download = `LDI_Backup_${new Date().toLocaleDateString()}.txt`; a.click();
+        a.download = `LDI_Backup.txt`; a.click();
     }
 
     function openHistory() {
@@ -241,7 +260,6 @@ const bibleData = {
             const dp = key.split('_');
             container.innerHTML += `<div style="background:var(--bg); padding:15px; border-radius:15px; margin-bottom:12px; border-left:5px solid var(--primary);"><div style="font-weight:bold; color:var(--primary); margin-bottom:5px;">${dp[2]}.${dp[3]}.${dp[4]}</div><div style="font-size:0.9rem;">${content}</div></div>`;
         });
-        if(!container.innerHTML) container.innerHTML = "<p style='text-align:center; color:#999;'>기록이 없습니다.</p>";
         document.getElementById('qtListModal').style.display = 'flex';
     }
 
